@@ -8,10 +8,29 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use serde::Deserialize;
 use log::trace;
+use crate::state::AppState;
+use crate::db::queries::insert_post;
 
 #[axum::debug_handler]
-pub async fn create_post(post: CreatePostPayload) {
-    trace!("Creating post: {:?}", post);
+pub async fn create_post(
+    state: State<AppState>,
+    post: CreatePostPayload
+) -> Result<impl IntoResponse, (StatusCode, &'static str)> {
+    let post_id = insert_post(
+        state.db.clone(),
+        &post.text,
+        post.parent_id
+    )
+        .await
+        .map_err(|err| {
+            tracing::error!("Failed to insert post: {:?}", err);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to insert post"
+            )
+        })?;
+    
+    Ok((StatusCode::CREATED, Json(post_id)))
 }
 
 // create post payload model

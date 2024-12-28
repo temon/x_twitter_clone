@@ -7,9 +7,11 @@ use axum::{
 use axum::extract::State;
 use axum::http::StatusCode;
 use serde::Deserialize;
+use log::trace;
 
 #[axum::debug_handler]
 pub async fn create_post(post: CreatePostPayload) {
+    trace!("Creating post: {:?}", post);
 }
 
 // create post payload model
@@ -22,6 +24,7 @@ pub struct CreatePostPayload {
 #[derive(Deserialize, Debug)]
 pub struct CreatePostPayloadValidator {
     pub text: Option<String>,
+    pub parent_id: Option<i32>
 }
 
 #[async_trait]
@@ -59,9 +62,14 @@ where
             return Err((StatusCode::BAD_REQUEST, "text is too long").into_response());
         }
 
+        // validate the parent id
+        if post.parent_id.is_some_and(|parent_id|parent_id < 1) {
+            return Err((StatusCode::BAD_REQUEST, "parent_id must be greater than 0").into_response());
+        }
+
         Ok(Self {
             text,
-            parent_id: None,
+            parent_id: post.parent_id,
         })
     }
 

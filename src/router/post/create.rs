@@ -15,7 +15,7 @@ use crate::db::queries::insert_post;
 pub async fn create_post(
     state: State<AppState>,
     post: CreatePostPayload
-) -> Result<impl IntoResponse, (StatusCode, &'static str)> {
+) -> Result<(StatusCode, Json<CreatePostResponse>), (StatusCode, &'static str)> {
     let post_id = insert_post(
         state.db.clone(),
         &post.text,
@@ -30,7 +30,7 @@ pub async fn create_post(
             )
         })?;
     
-    Ok((StatusCode::CREATED, Json(post_id)))
+    Ok((StatusCode::CREATED, Json(CreatePostResponse { id: post_id })))
 }
 
 // create post payload model
@@ -44,6 +44,12 @@ pub struct CreatePostPayload {
 pub struct CreatePostPayloadValidator {
     pub text: Option<String>,
     pub parent_id: Option<i32>
+}
+
+// response model
+#[derive(serde::Serialize)]
+pub struct CreatePostResponse {
+    pub id: i32,
 }
 
 #[async_trait]

@@ -25,7 +25,12 @@ pub async fn get_all_top_level(db: DB) -> Result<Vec<Post>> {
         SELECT
             id,
             text,
-            likes,
+            likes AS like_count, 
+            (
+                SELECT COUNT(*)
+                FROM post AS p2
+                WHERE p2.parent_id = post.id
+            ) AS reply_count,
             parent_id 
         FROM post
         WHERE parent_id IS NULL
@@ -42,6 +47,7 @@ pub async fn get_all_top_level(db: DB) -> Result<Vec<Post>> {
 pub struct Post {
     pub id: i32,
     pub text: String,
-    pub likes: Option<i32>,
+    pub like_count: Option<i32>,
+    pub reply_count: Option<i64>,
     pub parent_id: Option<i32>,
 }
